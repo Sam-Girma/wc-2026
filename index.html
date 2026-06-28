@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>World Cup Bracket Predictor</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #151c33;
+    --panel-2: #1d2745;
+    --line: #2a3658;
+    --text: #e7ecf7;
+    --muted: #8b97b8;
+    --win: #1f9d57;
+    --win-glow: rgba(31, 157, 87, 0.45);
+    --accent: #f5c542;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:
+      linear-gradient(rgba(6,10,22,.82), rgba(6,10,22,.92)),
+      url("https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=1600&q=80") center/cover no-repeat,
+      radial-gradient(600px 320px at 12% -8%, rgba(255,250,220,.22), transparent 62%),
+      radial-gradient(600px 320px at 88% -8%, rgba(255,250,220,.22), transparent 62%),
+      repeating-linear-gradient(90deg, #0c5a2a 0 64px, #0f6a34 64px 128px) bottom center / 100% 24% no-repeat,
+      linear-gradient(180deg, #0a1430 0%, #0b1020 58%);
+    background-color: var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+  header {
+    padding: 10px 18px 4px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 17px; letter-spacing: .3px; }
+  header p { margin: 0; color: var(--muted); font-size: 11px; }
+  .spacer { flex: 1; }
+  button.reset {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    padding: 9px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .15s;
+  }
+  button.reset:hover { background: #283354; border-color: var(--accent); }
+
+  .champion-banner {
+    margin: 8px 28px 0;
+    padding: 14px 20px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(245,197,66,.15), rgba(245,197,66,.02));
+    border: 1px solid rgba(245,197,66,.35);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .champion-banner.show { display: flex; }
+  .champion-banner .trophy { font-size: 26px; }
+
+  .bracket {
+    display: flex;
+    gap: 7px;
+    padding: 8px 14px;
+    height: calc(100vh - 118px);
+    overflow: hidden;
+    align-items: stretch;
+  }
+  .round {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+  }
+  .round-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  .round-title {
+    flex: 0 0 auto;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .match {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.22);
+  }
+  .match .date {
+    font-size: 8px;
+    color: var(--muted);
+    padding: 2px 7px 1px;
+    border-bottom: 1px dashed var(--line);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 7px;
+    cursor: pointer;
+    transition: background .12s;
+    border-bottom: 1px solid transparent;
+  }
+  .team:first-of-type { border-bottom: 1px solid var(--line); }
+  .team:hover:not(.tbd) { background: var(--panel-2); }
+  .team .flag { font-size: 13px; width: 16px; text-align: center; flex: 0 0 auto; }
+  .team .name { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team.win {
+    background: linear-gradient(90deg, var(--win-glow), transparent);
+  }
+  .team.win .name { color: #b8f5d0; }
+  .team.win::after {
+    content: "✓";
+    color: var(--win);
+    font-weight: 800;
+  }
+  .team.tbd { cursor: default; }
+  .team.tbd .name { color: #5a6688; font-style: italic; }
+  .team.mirror { flex-direction: row-reverse; text-align: right; }
+  .team.mirror.win::after { order: -1; }
+  .round.center .round-body { justify-content: center; }
+  .round.center .match { border-color: rgba(245,197,66,.5); box-shadow: 0 8px 26px rgba(245,197,66,.12); }
+  .champion-card {
+    margin-top: 10px;
+    text-align: center;
+    padding: 9px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(245,197,66,.16), rgba(245,197,66,.03));
+    border: 1px solid rgba(245,197,66,.4);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .champion-card .trophy { font-size: 26px; display: block; margin-bottom: 4px; }
+  .champion-card .champ-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+  .champion-card .champ-name { font-size: 13px; margin-top: 2px; }
+  .final-trophy { text-align: center; font-size: 20px; line-height: 1; padding: 4px 0 1px; filter: drop-shadow(0 0 6px rgba(245,197,66,.6)); }
+  .hint { color: var(--muted); font-size: 10px; padding: 2px 18px; margin: 0; }
+  .made { text-align: center; color: var(--muted); font-size: 11px; padding: 4px 0 8px; margin: 0; }
+  .made .heart { color: #ff5a7a; }
+  .made a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .made a:hover { text-decoration: underline; }
+
+  @media (max-width: 760px) {
+    header { padding: 8px 12px 4px; gap: 8px; }
+    header h1 { font-size: 14px; }
+    header p { display: none; }
+    button.reset { padding: 6px 12px; font-size: 11px; }
+    .bracket {
+      gap: 8px;
+      padding: 8px 12px;
+      height: calc(100vh - 84px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .round { flex: 0 0 auto; min-width: 108px; }
+    .round.center { min-width: 122px; }
+    .round-title { font-size: 8px; margin-bottom: 3px; }
+    .match { border-radius: 6px; }
+    .match .date { display: none; }
+    .team { padding: 7px 8px; gap: 6px; }
+    .team .flag { font-size: 15px; width: 18px; }
+    .team .name { font-size: 12px; }
+    .champion-card { margin-top: 10px; padding: 8px; }
+    .champion-card .trophy { font-size: 20px; }
+    .final-trophy { font-size: 18px; }
+    .hint { display: none; }
+    .made { font-size: 10px; padding: 4px 0 6px; }
+  }
+  @media (max-width: 760px) {
+    .scroll-tip { display: block; }
+  }
+  .scroll-tip { display: none; text-align: center; color: var(--muted); font-size: 10px; margin: 0; padding: 2px 0 0; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>⚽ World Cup Bracket Predictor</h1>
+      <p>Click a team to send them through. Click the winner again to undo a pick.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="reset" id="resetBtn">Reset all picks</button>
+  </header>
+
+  <div class="bracket" id="bracket"></div>
+  <p class="scroll-tip">Swipe sideways to see both halves of the bracket &rarr;</p>
+  <p class="hint">Changing an earlier match clears the later picks that depended on it, so the path always stays consistent.</p>
+  <footer class="made">Made with <span class="heart">&#10084;</span> by Samuel &middot; <a href="https://x.com/samiawsome1" target="_blank" rel="noreferrer">@samiawsome1</a></footer>
+
+<script>
+  const FLAGS = {
+    "South Africa":"🇿🇦","Canada":"🇨🇦","Netherlands":"🇳🇱","Morocco":"🇲🇦",
+    "Germany":"🇩🇪","Paraguay":"🇵🇾","France":"🇫🇷","Sweden":"🇸🇪",
+    "Belgium":"🇧🇪","Senegal":"🇸🇳","USA":"🇺🇸","Bosnia and Herzegovina":"🇧🇦",
+    "Spain":"🇪🇸","Austria":"🇦🇹","Portugal":"🇵🇹","Croatia":"🇭🇷",
+    "Brazil":"🇧🇷","Japan":"🇯🇵","Côte d'Ivoire":"🇨🇮","Norway":"🇳🇴",
+    "Mexico":"🇲🇽","Ecuador":"🇪🇨","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","DR Congo":"🇨🇩",
+    "Switzerland":"🇨🇭","Algeria":"🇩🇿","Colombia":"🇨🇴","Ghana":"🇬🇭",
+    "Australia":"🇦🇺","Egypt":"🇪🇬","Argentina":"🇦🇷","Cabo Verde":"🇨🇻"
+  };
+
+  const SHORT = {
+    "South Africa":"RSA","Canada":"CAN","Netherlands":"NED","Morocco":"MAR",
+    "Germany":"GER","Paraguay":"PAR","France":"FRA","Sweden":"SWE",
+    "Belgium":"BEL","Senegal":"SEN","USA":"USA","Bosnia and Herzegovina":"BIH",
+    "Spain":"ESP","Austria":"AUT","Portugal":"POR","Croatia":"CRO",
+    "Brazil":"BRA","Japan":"JPN","Côte d'Ivoire":"CIV","Norway":"NOR",
+    "Mexico":"MEX","Ecuador":"ECU","England":"ENG","DR Congo":"COD",
+    "Switzerland":"SUI","Algeria":"ALG","Colombia":"COL","Ghana":"GHA",
+    "Australia":"AUS","Egypt":"EGY","Argentina":"ARG","Cabo Verde":"CPV"
+  };
+
+  // Round of 32: 16 matches with their kickoff labels.
+  const round32 = [
+    { date: "Today, 10:00 PM",        teams: ["South Africa", "Canada"] },
+    { date: "Tue, Jun 30, 4:00 AM",   teams: ["Netherlands", "Morocco"] },
+    { date: "Tomorrow, 11:30 PM",     teams: ["Germany", "Paraguay"] },
+    { date: "Wed, Jul 1, 12:00 AM",   teams: ["France", "Sweden"] },
+    { date: "Wed, Jul 1, 11:00 PM",   teams: ["Belgium", "Senegal"] },
+    { date: "Thu, Jul 2, 3:00 AM",    teams: ["USA", "Bosnia and Herzegovina"] },
+    { date: "Thu, Jul 2, 10:00 PM",   teams: ["Spain", "Austria"] },
+    { date: "Fri, Jul 3, 2:00 AM",    teams: ["Portugal", "Croatia"] },
+    { date: "Tomorrow, 8:00 PM",      teams: ["Brazil", "Japan"] },
+    { date: "Tue, Jun 30, 8:00 PM",   teams: ["Côte d'Ivoire", "Norway"] },
+    { date: "Wed, Jul 1, 4:00 AM",    teams: ["Mexico", "Ecuador"] },
+    { date: "Wed, Jul 1, 7:00 PM",    teams: ["England", "DR Congo"] },
+    { date: "Fri, Jul 3, 6:00 AM",    teams: ["Switzerland", "Algeria"] },
+    { date: "Sat, Jul 4, 4:30 AM",    teams: ["Colombia", "Ghana"] },
+    { date: "Fri, Jul 3, 9:00 PM",    teams: ["Australia", "Egypt"] },
+    { date: "Sat, Jul 4, 1:00 AM",    teams: ["Argentina", "Cabo Verde"] }
+  ];
+
+  const ROUND_NAMES = ["Round of 32", "Round of 16", "Quarter-finals", "Semi-finals", "Final"];
+  const LATER_DATES = {
+    1: ["Sat, Jul 4, 8:00 PM","Sun, Jul 5, 12:00 AM","Tue, Jul 7, 3:00 AM","Mon, Jul 6, 10:00 PM",
+        "Sun, Jul 5, 11:00 PM","Mon, Jul 6, 3:00 AM","Tue, Jul 7, 11:00 PM","Tue, Jul 7, 7:00 PM"],
+    2: ["Thu, Jul 9, 11:00 PM","Fri, Jul 10, 10:00 PM","Sun, Jul 12, 12:00 AM","Sun, Jul 12, 4:00 AM"],
+    3: ["Jul 14, 10:00 PM","Jul 15, 10:00 PM"],
+    4: ["Jul 19, 10:00 PM"]
+  };
+
+  // picks[round][match] = winning team name (or null)
+  const ROUND_COUNT = ROUND_NAMES.length;
+  const picks = [];
+  let count = 16;
+  for (let r = 0; r < ROUND_COUNT; r++) {
+    picks.push(new Array(count).fill(null));
+    count = count / 2;
+  }
+
+  function teamsFor(round, idx) {
+    if (round === 0) return round32[idx].teams;
+    return [ picks[round - 1][idx * 2], picks[round - 1][idx * 2 + 1] ];
+  }
+
+  function dateFor(round, idx) {
+    if (round === 0) return round32[idx].date;
+    return LATER_DATES[round][idx];
+  }
+
+  function clearDownstream(round, idx) {
+    if (round + 1 >= ROUND_COUNT) return;
+    const nextIdx = Math.floor(idx / 2);
+    if (picks[round + 1][nextIdx] !== null) {
+      picks[round + 1][nextIdx] = null;
+      clearDownstream(round + 1, nextIdx);
+    }
+  }
+
+  function choose(round, idx, team) {
+    if (!team) return;
+    if (picks[round][idx] === team) {
+      picks[round][idx] = null;        // toggle off
+    } else {
+      picks[round][idx] = team;
+    }
+    clearDownstream(round, idx);
+    render();
+  }
+
+  function buildMatchCard(r, i, mirror, isFinal) {
+    const [a, b] = teamsFor(r, i);
+    const winner = picks[r][i];
+
+    const card = document.createElement("div");
+    card.className = "match";
+
+    const date = document.createElement("div");
+    date.className = "date";
+    date.textContent = dateFor(r, i);
+    card.appendChild(date);
+
+    [a, b].forEach(team => {
+      if (isFinal && team && winner === team) {
+        const trophy = document.createElement("div");
+        trophy.className = "final-trophy";
+        trophy.textContent = "🏆";
+        card.appendChild(trophy);
+      }
+      const row = document.createElement("div");
+      const isTbd = !team;
+      row.className = "team" + (isTbd ? " tbd" : "") +
+        (team && winner === team ? " win" : "") + (mirror ? " mirror" : "");
+      const flag = isTbd ? "•" : (FLAGS[team] || "⚽");
+      const label = isTbd ? "TBD" : (isMobile() ? (SHORT[team] || team) : team);
+      row.innerHTML = '<span class="flag">' + flag + '</span><span class="name">' +
+        label + '</span>';
+      if (!isTbd) row.addEventListener("click", () => choose(r, i, team));
+      card.appendChild(row);
+    });
+    return card;
+  }
+
+  // Columns left-to-right: left half of each round (R32..SF), the Final in the
+  // centre, then the right half mirrored back out (SF..R32).
+  function buildLayout() {
+    const sizes = picks.map(p => p.length);
+    const lastR = ROUND_COUNT - 1;
+    const cols = [];
+    for (let r = 0; r < lastR; r++) {
+      const idx = [];
+      for (let i = 0; i < sizes[r] / 2; i++) idx.push(i);
+      cols.push({ round: r, indices: idx, side: "left" });
+    }
+    cols.push({ round: lastR, indices: [0], side: "center" });
+    for (let r = lastR - 1; r >= 0; r--) {
+      const idx = [];
+      for (let i = sizes[r] / 2; i < sizes[r]; i++) idx.push(i);
+      cols.push({ round: r, indices: idx, side: "right" });
+    }
+    return cols;
+  }
+
+  function isMobile() { return window.matchMedia("(max-width: 760px)").matches; }
+
+  function championCard() {
+    const champ = picks[ROUND_COUNT - 1][0];
+    if (!champ) return null;
+    const cc = document.createElement("div");
+    cc.className = "champion-card";
+    cc.innerHTML = '<span class="trophy">🏆</span><div class="champ-label">World Champion</div>' +
+      '<div class="champ-name">' + (FLAGS[champ] || "⚽") + " " + champ + '</div>';
+    return cc;
+  }
+
+  function makeColumn(roundIndex, indices, side) {
+    const col = document.createElement("div");
+    col.className = "round" + (side === "center" ? " center" : "");
+
+    const title = document.createElement("div");
+    title.className = "round-title";
+    title.textContent = ROUND_NAMES[roundIndex];
+    col.appendChild(title);
+
+    const body = document.createElement("div");
+    body.className = "round-body";
+    indices.forEach(i => {
+      body.appendChild(buildMatchCard(roundIndex, i, side === "right", roundIndex === ROUND_COUNT - 1));
+    });
+    col.appendChild(body);
+    return col;
+  }
+
+  function renderDesktop(bracket) {
+    buildLayout().forEach(c => {
+      const col = makeColumn(c.round, c.indices, c.side);
+      if (c.side === "center") {
+        const cc = championCard();
+        if (cc) col.appendChild(cc);
+      }
+      bracket.appendChild(col);
+    });
+  }
+
+  function render() {
+    const bracket = document.getElementById("bracket");
+    bracket.innerHTML = "";
+    renderDesktop(bracket);
+  }
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(render, 120);
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    for (let r = 0; r < ROUND_COUNT; r++) picks[r].fill(null);
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
