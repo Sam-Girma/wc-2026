@@ -14,7 +14,7 @@
     --text: #e7ecf7;
     --muted: #8b97b8;
     --win: #1f9d57;
-    --win-glow: rgba(31, 157, 87, 0.45);
+    --win-glow: rgba(31, 157, 87, 0.55);
     --accent: #f5c542;
   }
   * { box-sizing: border-box; }
@@ -29,17 +29,26 @@
     background-attachment: fixed;
     color: var(--text);
     min-height: 100vh;
-    overflow: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   header {
-    padding: 10px 18px 4px;
+    padding: 12px 20px 4px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
   }
-  header h1 { margin: 0; font-size: 17px; letter-spacing: .3px; }
-  header p { margin: 0; color: var(--muted); font-size: 11px; }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .3px; }
+  header p { margin: 0; color: var(--muted); font-size: 12px; }
   .spacer { flex: 1; }
   button.reset {
     background: var(--panel-2);
@@ -54,162 +63,126 @@
   }
   button.reset:hover { background: #283354; border-color: var(--accent); }
 
-  .champion-banner {
-    margin: 8px 28px 0;
-    padding: 14px 20px;
-    border-radius: 14px;
-    background: linear-gradient(90deg, rgba(245,197,66,.15), rgba(245,197,66,.02));
-    border: 1px solid rgba(245,197,66,.35);
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-size: 18px;
-    font-weight: 700;
+  .stage {
+    --size: min(96vw, 86vh, 980px);
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    margin: 0 auto;
   }
-  .champion-banner.show { display: flex; }
-  .champion-banner .trophy { font-size: 26px; }
+  .links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .links line { stroke: rgba(255,255,255,.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .links line.on { stroke: var(--accent); stroke-width: 1.7; vector-effect: non-scaling-stroke; }
 
-  .bracket {
-    display: flex;
-    gap: 10px;
-    padding: 12px 18px 24px;
-    height: 940px;
-    align-items: stretch;
-  }
-  .round {
+  .badge {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    flex: 1 1 0;
-    min-width: 132px;
-    height: 100%;
+    align-items: center;
+    gap: calc(var(--size) * 0.004);
   }
-  .round-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-  }
-  .round-title {
-    flex: 0 0 auto;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: var(--accent);
-    margin-bottom: 8px;
-  }
-  .match {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,.22);
-    flex: 0 0 auto;
-  }
-  .match .date {
-    font-size: 9px;
-    color: var(--muted);
-    padding: 4px 9px 2px;
-    border-bottom: 1px dashed var(--line);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .team {
+  .badge .disc {
+    border-radius: 50%;
+    background: rgba(18,25,46,.92);
+    border: 1.5px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    padding: 9px 12px;
+    line-height: 1;
+    box-shadow: 0 2px 9px rgba(0,0,0,.45);
     cursor: pointer;
-    transition: background .12s;
+    transition: transform .12s ease, border-color .12s, box-shadow .12s, filter .2s, opacity .2s;
   }
-  .team + .team { border-top: 1px solid var(--line); }
-  .team:hover:not(.tbd) { background: var(--panel-2); }
-  .team .flag { font-size: 17px; width: 22px; text-align: center; flex: 0 0 auto; }
-  .team .name { font-size: 14px; font-weight: 700; letter-spacing: .5px; flex: 0 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .team.win {
-    background: linear-gradient(90deg, var(--win-glow), transparent);
-  }
-  .team.win .name { color: #b8f5d0; }
-  .team.win::after {
-    content: "✓";
-    color: var(--win);
+  .badge .disc:hover { transform: scale(1.1); border-color: var(--accent); }
+  .rim-code {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    white-space: nowrap;
     font-weight: 800;
+    color: var(--text);
+    letter-spacing: .3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.9);
+    font-size: calc(var(--size) * 0.0145);
+    pointer-events: none;
   }
-  .team.tbd { cursor: default; }
-  .team.tbd .name { color: #5a6688; font-style: italic; }
-  .team.mirror { flex-direction: row-reverse; text-align: right; }
-  .team.mirror.win::after { order: -1; }
-  .round.center .round-body { justify-content: center; }
-  .round.center .match { border-color: rgba(245,197,66,.5); box-shadow: 0 8px 26px rgba(245,197,66,.12); }
-  .champion-card {
-    margin-top: 10px;
-    text-align: center;
-    padding: 9px;
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(245,197,66,.16), rgba(245,197,66,.03));
-    border: 1px solid rgba(245,197,66,.4);
-    font-weight: 700;
-    font-size: 12px;
+  .rim-code.elim { opacity: .32; }
+
+  .lvl0 .disc { width: calc(var(--size)*0.076); height: calc(var(--size)*0.076); font-size: calc(var(--size)*0.04); }
+  .lvl1 .disc { width: calc(var(--size)*0.07);  height: calc(var(--size)*0.07);  font-size: calc(var(--size)*0.037); }
+  .lvl2 .disc { width: calc(var(--size)*0.066); height: calc(var(--size)*0.066); font-size: calc(var(--size)*0.035); }
+  .lvl3 .disc { width: calc(var(--size)*0.064); height: calc(var(--size)*0.064); font-size: calc(var(--size)*0.034); }
+  .lvl4 .disc { width: calc(var(--size)*0.066); height: calc(var(--size)*0.066); font-size: calc(var(--size)*0.036); }
+
+  .badge.placeholder .disc { background: rgba(255,255,255,.03); border-style: dashed; cursor: default; }
+  .badge.placeholder .disc:hover { transform: none; border-color: var(--line); }
+  .badge.elim .disc { filter: grayscale(1); opacity: .28; }
+  .badge.elim .code { opacity: .3; }
+  .badge.win .disc {
+    border-color: var(--win);
+    box-shadow: 0 0 0 2px var(--win-glow), 0 2px 12px rgba(0,0,0,.5);
   }
-  .champion-card .trophy { font-size: 26px; display: block; margin-bottom: 4px; }
-  .champion-card .champ-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
-  .champion-card .champ-name { font-size: 13px; margin-top: 2px; }
-  .final-trophy { text-align: center; font-size: 20px; line-height: 1; padding: 4px 0 1px; filter: drop-shadow(0 0 6px rgba(245,197,66,.6)); }
-  .hint { color: var(--muted); font-size: 10px; padding: 2px 18px; margin: 6px 0 0; }
-  .made { text-align: center; color: var(--muted); font-size: 11px; padding: 4px 0 8px; margin: 0; }
+  .badge.win .code { color: #bdf6d4; }
+
+  .center {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3; text-align: center; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .center .trophy {
+    height: calc(var(--size) * 0.2);
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 0 14px rgba(245,197,66,.55)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
+  }
+  .center .champ-flag { font-size: calc(var(--size) * 0.05); margin-top: calc(var(--size)*0.004); }
+  .center .champ-name {
+    font-weight: 800;
+    font-size: calc(var(--size) * 0.024);
+    color: var(--accent);
+    letter-spacing: .3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
+  }
+  .center .champ-label {
+    font-size: calc(var(--size) * 0.013);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .hint { color: var(--muted); font-size: 11px; text-align: center; padding: 8px 18px 0; margin: 0; }
+  .made { text-align: center; color: var(--muted); font-size: 11px; padding: 6px 0 10px; margin: 0; }
   .made .heart { color: #ff5a7a; }
   .made a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .made a:hover { text-decoration: underline; }
 
-  @media (max-width: 760px) {
-    header { padding: 8px 12px 4px; gap: 8px; }
-    header h1 { font-size: 14px; }
+  @media (max-width: 640px) {
+    header { padding: 10px 14px 2px; gap: 8px; }
+    header h1 { font-size: 15px; }
     header p { display: none; }
-    button.reset { padding: 6px 12px; font-size: 11px; }
-    .bracket {
-      gap: 8px;
-      padding: 8px 12px;
-      height: calc(100vh - 84px);
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .round { flex: 0 0 auto; min-width: 108px; }
-    .round.center { min-width: 122px; }
-    .round-title { font-size: 8px; margin-bottom: 3px; }
-    .match { border-radius: 6px; }
-    .match .date { display: none; }
-    .team { padding: 7px 8px; gap: 6px; }
-    .team .flag { font-size: 15px; width: 18px; }
-    .team .name { font-size: 12px; }
-    .champion-card { margin-top: 10px; padding: 8px; }
-    .champion-card .trophy { font-size: 20px; }
-    .final-trophy { font-size: 18px; }
-    .hint { display: none; }
-    .made { font-size: 10px; padding: 4px 0 6px; }
+    button.reset { padding: 7px 12px; font-size: 12px; }
+    .stage { --size: min(92vw, 62vh, 480px); }
+    .hint { font-size: 10px; }
   }
-  @media (max-width: 760px) {
-    .scroll-tip { display: block; }
-  }
-  .scroll-tip { display: none; text-align: center; color: var(--muted); font-size: 10px; margin: 0; padding: 2px 0 0; }
 </style>
 </head>
 <body>
   <header>
     <div>
       <h1>⚽ World Cup Bracket Predictor</h1>
-      <p>Click a team to send them through. Click the winner again to undo a pick.</p>
+      <p>Click a team to advance it toward the trophy. Eliminated teams fade out.</p>
     </div>
     <div class="spacer"></div>
     <button class="reset" id="resetBtn">Reset all picks</button>
   </header>
 
-  <div class="bracket" id="bracket"></div>
-  <p class="scroll-tip">Swipe sideways to see both halves of the bracket &rarr;</p>
-  <p class="hint">Changing an earlier match clears the later picks that depended on it, so the path always stays consistent.</p>
+  <main class="main">
+    <div class="stage" id="stage"></div>
+    <p class="hint">Tap a country to send it to the next ring. Click a faded team to switch the winner; this clears any later picks that depended on it.</p>
+  </main>
   <footer class="made">Made with <span class="heart">&#10084;</span> by Samuel &middot; <a href="https://x.com/samiawsome1" target="_blank" rel="noreferrer">@samiawsome1</a></footer>
 
 <script>
@@ -235,180 +208,154 @@
     "Australia":"AUS","Egypt":"EGY","Argentina":"ARG","Cabo Verde":"CPV"
   };
 
-  // Round of 32: 16 matches with their kickoff labels.
+  // Round of 32 matchups (top team listed first).
   const round32 = [
-    { date: "Today, 10:00 PM",        teams: ["South Africa", "Canada"] },
-    { date: "Tue, Jun 30, 4:00 AM",   teams: ["Netherlands", "Morocco"] },
-    { date: "Tomorrow, 11:30 PM",     teams: ["Germany", "Paraguay"] },
-    { date: "Wed, Jul 1, 12:00 AM",   teams: ["France", "Sweden"] },
-    { date: "Wed, Jul 1, 11:00 PM",   teams: ["Belgium", "Senegal"] },
-    { date: "Thu, Jul 2, 3:00 AM",    teams: ["USA", "Bosnia and Herzegovina"] },
-    { date: "Thu, Jul 2, 10:00 PM",   teams: ["Spain", "Austria"] },
-    { date: "Fri, Jul 3, 2:00 AM",    teams: ["Portugal", "Croatia"] },
-    { date: "Tomorrow, 8:00 PM",      teams: ["Brazil", "Japan"] },
-    { date: "Tue, Jun 30, 8:00 PM",   teams: ["Côte d'Ivoire", "Norway"] },
-    { date: "Wed, Jul 1, 4:00 AM",    teams: ["Mexico", "Ecuador"] },
-    { date: "Wed, Jul 1, 7:00 PM",    teams: ["England", "DR Congo"] },
-    { date: "Fri, Jul 3, 6:00 AM",    teams: ["Switzerland", "Algeria"] },
-    { date: "Sat, Jul 4, 4:30 AM",    teams: ["Colombia", "Ghana"] },
-    { date: "Fri, Jul 3, 9:00 PM",    teams: ["Australia", "Egypt"] },
-    { date: "Sat, Jul 4, 1:00 AM",    teams: ["Argentina", "Cabo Verde"] }
+    ["South Africa", "Canada"],
+    ["Netherlands", "Morocco"],
+    ["Germany", "Paraguay"],
+    ["France", "Sweden"],
+    ["Belgium", "Senegal"],
+    ["USA", "Bosnia and Herzegovina"],
+    ["Spain", "Austria"],
+    ["Portugal", "Croatia"],
+    ["Brazil", "Japan"],
+    ["Côte d'Ivoire", "Norway"],
+    ["Mexico", "Ecuador"],
+    ["England", "DR Congo"],
+    ["Switzerland", "Algeria"],
+    ["Colombia", "Ghana"],
+    ["Australia", "Egypt"],
+    ["Argentina", "Cabo Verde"]
   ];
 
-  const ROUND_NAMES = ["Round of 32", "Round of 16", "Quarter-finals", "Semi-finals", "Final"];
-  const LATER_DATES = {
-    1: ["Sat, Jul 4, 8:00 PM","Sun, Jul 5, 12:00 AM","Tue, Jul 7, 3:00 AM","Mon, Jul 6, 10:00 PM",
-        "Sun, Jul 5, 11:00 PM","Mon, Jul 6, 3:00 AM","Tue, Jul 7, 11:00 PM","Tue, Jul 7, 7:00 PM"],
-    2: ["Thu, Jul 9, 11:00 PM","Fri, Jul 10, 10:00 PM","Sun, Jul 12, 12:00 AM","Sun, Jul 12, 4:00 AM"],
-    3: ["Jul 14, 10:00 PM","Jul 15, 10:00 PM"],
-    4: ["Jul 19, 10:00 PM"]
-  };
+  const ROUND_COUNT = 5;            // R32, R16, QF, SF, Final
+  const COUNTS = [32, 16, 8, 4, 2, 1]; // nodes per ring (level 0..5, last = champion)
+  const RADII  = [0.88, 0.655, 0.46, 0.295, 0.15, 0]; // fraction of half-stage
+  const SPREAD = 44;                // percent of stage from centre at radius 1
 
-  // picks[round][match] = winning team name (or null)
-  const ROUND_COUNT = ROUND_NAMES.length;
+  // picks[round][match] = winning team (or null). round 0 -> 16 winners ... round 4 -> 1.
   const picks = [];
-  let count = 16;
-  for (let r = 0; r < ROUND_COUNT; r++) {
-    picks.push(new Array(count).fill(null));
-    count = count / 2;
-  }
+  let c = 16;
+  for (let r = 0; r < ROUND_COUNT; r++) { picks.push(new Array(c).fill(null)); c /= 2; }
 
-  function teamsFor(round, idx) {
-    if (round === 0) return round32[idx].teams;
-    return [ picks[round - 1][idx * 2], picks[round - 1][idx * 2 + 1] ];
-  }
-
-  function dateFor(round, idx) {
-    if (round === 0) return round32[idx].date;
-    return LATER_DATES[round][idx];
+  // The team occupying a given ring slot (null if not decided yet).
+  function teamAt(level, slot) {
+    if (level === 0) return round32[Math.floor(slot / 2)][slot % 2];
+    return picks[level - 1][slot];
   }
 
   function clearDownstream(round, idx) {
     if (round + 1 >= ROUND_COUNT) return;
-    const nextIdx = Math.floor(idx / 2);
-    if (picks[round + 1][nextIdx] !== null) {
-      picks[round + 1][nextIdx] = null;
-      clearDownstream(round + 1, nextIdx);
+    const next = Math.floor(idx / 2);
+    if (picks[round + 1][next] !== null) {
+      picks[round + 1][next] = null;
+      clearDownstream(round + 1, next);
     }
   }
 
   function choose(round, idx, team) {
     if (!team) return;
-    if (picks[round][idx] === team) {
-      picks[round][idx] = null;        // toggle off
-    } else {
-      picks[round][idx] = team;
-    }
+    if (picks[round][idx] === team) picks[round][idx] = null; // toggle off
+    else picks[round][idx] = team;
     clearDownstream(round, idx);
     render();
   }
 
-  function buildMatchCard(r, i, mirror, isFinal) {
-    const [a, b] = teamsFor(r, i);
-    const winner = picks[r][i];
-
-    const card = document.createElement("div");
-    card.className = "match";
-
-    const date = document.createElement("div");
-    date.className = "date";
-    date.textContent = dateFor(r, i);
-    card.appendChild(date);
-
-    [a, b].forEach(team => {
-      if (isFinal && team && winner === team) {
-        const trophy = document.createElement("div");
-        trophy.className = "final-trophy";
-        trophy.textContent = "🏆";
-        card.appendChild(trophy);
+  // Set of teams that have lost a decided match (greyed out).
+  function eliminatedTeams() {
+    const elim = new Set();
+    for (let p = 0; p < 32; p++) {
+      const team = round32[Math.floor(p / 2)][p % 2];
+      for (let r = 0; r < ROUND_COUNT; r++) {
+        const w = picks[r][Math.floor(p / Math.pow(2, r + 1))];
+        if (w === null) break;            // undecided -> still alive
+        if (w !== team) { elim.add(team); break; }
       }
-      const row = document.createElement("div");
-      const isTbd = !team;
-      row.className = "team" + (isTbd ? " tbd" : "") +
-        (team && winner === team ? " win" : "") + (mirror ? " mirror" : "");
-      const flag = isTbd ? "•" : (FLAGS[team] || "⚽");
-      const label = isTbd ? "TBD" : (SHORT[team] || team);
-      row.title = isTbd ? "" : team;
-      row.innerHTML = '<span class="flag">' + flag + '</span><span class="name">' +
-        label + '</span>';
-      if (!isTbd) row.addEventListener("click", () => choose(r, i, team));
-      card.appendChild(row);
-    });
-    return card;
-  }
-
-  // Columns left-to-right: left half of each round (R32..SF), the Final in the
-  // centre, then the right half mirrored back out (SF..R32).
-  function buildLayout() {
-    const sizes = picks.map(p => p.length);
-    const lastR = ROUND_COUNT - 1;
-    const cols = [];
-    for (let r = 0; r < lastR; r++) {
-      const idx = [];
-      for (let i = 0; i < sizes[r] / 2; i++) idx.push(i);
-      cols.push({ round: r, indices: idx, side: "left" });
     }
-    cols.push({ round: lastR, indices: [0], side: "center" });
-    for (let r = lastR - 1; r >= 0; r--) {
-      const idx = [];
-      for (let i = sizes[r] / 2; i < sizes[r]; i++) idx.push(i);
-      cols.push({ round: r, indices: idx, side: "right" });
-    }
-    return cols;
+    return elim;
   }
 
-  function isMobile() { return window.matchMedia("(max-width: 760px)").matches; }
-
-  function championCard() {
-    const champ = picks[ROUND_COUNT - 1][0];
-    if (!champ) return null;
-    const cc = document.createElement("div");
-    cc.className = "champion-card";
-    cc.innerHTML = '<span class="trophy">🏆</span><div class="champ-label">World Champion</div>' +
-      '<div class="champ-name">' + (FLAGS[champ] || "⚽") + " " + champ + '</div>';
-    return cc;
-  }
-
-  function makeColumn(roundIndex, indices, side) {
-    const col = document.createElement("div");
-    col.className = "round" + (side === "center" ? " center" : "");
-
-    const title = document.createElement("div");
-    title.className = "round-title";
-    title.textContent = ROUND_NAMES[roundIndex];
-    col.appendChild(title);
-
-    const body = document.createElement("div");
-    body.className = "round-body";
-    indices.forEach(i => {
-      body.appendChild(buildMatchCard(roundIndex, i, side === "right", roundIndex === ROUND_COUNT - 1));
-    });
-    col.appendChild(body);
-    return col;
-  }
-
-  function renderDesktop(bracket) {
-    buildLayout().forEach(c => {
-      const col = makeColumn(c.round, c.indices, c.side);
-      if (c.side === "center") {
-        const cc = championCard();
-        if (cc) col.appendChild(cc);
-      }
-      bracket.appendChild(col);
-    });
+  function nodePos(level, slot) {
+    const ang = (-90 + (slot + 0.5) * (360 / COUNTS[level])) * Math.PI / 180;
+    const r = RADII[level] * SPREAD;
+    return { x: 50 + r * Math.cos(ang), y: 50 + r * Math.sin(ang) };
   }
 
   function render() {
-    const bracket = document.getElementById("bracket");
-    bracket.innerHTML = "";
-    renderDesktop(bracket);
-  }
+    const stage = document.getElementById("stage");
+    stage.innerHTML = "";
 
-  let resizeTimer;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(render, 120);
-  });
+    // 1) connecting lines (behind everything)
+    let svg = '<svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">';
+    for (let L = 1; L <= ROUND_COUNT; L++) {
+      for (let s = 0; s < COUNTS[L]; s++) {
+        const parent = nodePos(L, s);
+        const winner = picks[L - 1][s];
+        for (const cs of [2 * s, 2 * s + 1]) {
+          const child = nodePos(L - 1, cs);
+          const on = winner && teamAt(L - 1, cs) === winner ? " class=\"on\"" : "";
+          svg += `<line${on} x1="${child.x.toFixed(2)}" y1="${child.y.toFixed(2)}" x2="${parent.x.toFixed(2)}" y2="${parent.y.toFixed(2)}" />`;
+        }
+      }
+    }
+    svg += "</svg>";
+    stage.insertAdjacentHTML("beforeend", svg);
+
+    // 2) team discs for rings 0..4
+    const elim = eliminatedTeams();
+    for (let L = 0; L < ROUND_COUNT; L++) {
+      for (let s = 0; s < COUNTS[L]; s++) {
+        const team = teamAt(L, s);
+        const pos = nodePos(L, s);
+        const badge = document.createElement("div");
+        badge.className = "badge lvl" + L;
+        badge.style.left = pos.x + "%";
+        badge.style.top = pos.y + "%";
+
+        const disc = document.createElement("div");
+        disc.className = "disc";
+
+        if (team) {
+          disc.textContent = FLAGS[team] || "⚽";
+          badge.title = team;
+          if (elim.has(team)) badge.classList.add("elim");
+          if (picks[L][Math.floor(s / 2)] === team) badge.classList.add("win");
+          disc.addEventListener("click", () => choose(L, Math.floor(s / 2), team));
+          badge.appendChild(disc);
+        } else {
+          badge.classList.add("placeholder");
+          badge.appendChild(disc);
+        }
+        stage.appendChild(badge);
+      }
+    }
+
+    // 2b) country codes just outside the outer ring, placed radially so they
+    //     point straight out and never land on a disc or an inner ring.
+    for (let s = 0; s < COUNTS[0]; s++) {
+      const team = teamAt(0, s);
+      if (!team) continue;
+      const ang = (-90 + (s + 0.5) * (360 / COUNTS[0])) * Math.PI / 180;
+      const r = 46;
+      const lbl = document.createElement("div");
+      lbl.className = "rim-code" + (elim.has(team) ? " elim" : "");
+      lbl.textContent = SHORT[team] || team;
+      lbl.style.left = (50 + r * Math.cos(ang)) + "%";
+      lbl.style.top = (50 + r * Math.sin(ang)) + "%";
+      stage.appendChild(lbl);
+    }
+
+    // 3) centre trophy / champion
+    const champ = picks[ROUND_COUNT - 1][0];
+    const center = document.createElement("div");
+    center.className = "center";
+    center.innerHTML = '<img class="trophy" src="trophy.png" alt="World Cup trophy" />' +
+      (champ
+        ? '<div class="champ-flag">' + (FLAGS[champ] || "⚽") + '</div>' +
+          '<div class="champ-name">' + champ + '</div>'
+        : '<div class="champ-label">Champion</div>');
+    stage.appendChild(center);
+  }
 
   document.getElementById("resetBtn").addEventListener("click", () => {
     for (let r = 0; r < ROUND_COUNT; r++) picks[r].fill(null);
