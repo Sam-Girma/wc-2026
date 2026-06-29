@@ -22,10 +22,9 @@
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background:
-      linear-gradient(rgba(6,10,22,.86), rgba(6,10,22,.93)),
-      url("wc2026-bg.png") center/cover no-repeat,
-      linear-gradient(180deg, #0a1430 0%, #0b1020 58%);
-    background-color: var(--bg);
+      radial-gradient(circle at 50% 49%, rgba(245,197,66,.22), rgba(245,160,40,.06) 20%, transparent 44%),
+      radial-gradient(circle at 50% 50%, #16110c 0%, #0c0a0e 48%, #070608 100%);
+    background-color: #070608;
     background-attachment: fixed;
     color: var(--text);
     min-height: 100vh;
@@ -71,8 +70,15 @@
     margin: 0 auto;
   }
   .links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-  .links line { stroke: rgba(255,255,255,.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
-  .links line.on { stroke: var(--accent); stroke-width: 1.7; vector-effect: non-scaling-stroke; }
+  .links path {
+    fill: none;
+    stroke: rgba(245,197,66,.24);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .links path.on { stroke: var(--accent); stroke-width: 1.8; }
 
   .badge {
     position: absolute;
@@ -86,15 +92,17 @@
   .badge .disc {
     border-radius: 50%;
     background: rgba(18,25,46,.92);
-    border: 1.5px solid var(--line);
+    border: 2px solid rgba(255,255,255,.5);
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    box-shadow: 0 2px 9px rgba(0,0,0,.45);
+    overflow: hidden;
+    box-shadow: 0 2px 9px rgba(0,0,0,.55);
     cursor: pointer;
     transition: transform .12s ease, border-color .12s, box-shadow .12s, filter .2s, opacity .2s;
   }
+  .badge .disc.flag { background-size: cover; background-position: center; }
   .badge .disc:hover { transform: scale(1.1); border-color: var(--accent); }
   .rim-code {
     position: absolute;
@@ -110,11 +118,11 @@
   }
   .rim-code.elim { opacity: .32; }
 
-  .lvl0 .disc { width: calc(var(--size)*0.076); height: calc(var(--size)*0.076); font-size: calc(var(--size)*0.04); }
-  .lvl1 .disc { width: calc(var(--size)*0.07);  height: calc(var(--size)*0.07);  font-size: calc(var(--size)*0.037); }
-  .lvl2 .disc { width: calc(var(--size)*0.066); height: calc(var(--size)*0.066); font-size: calc(var(--size)*0.035); }
-  .lvl3 .disc { width: calc(var(--size)*0.064); height: calc(var(--size)*0.064); font-size: calc(var(--size)*0.034); }
-  .lvl4 .disc { width: calc(var(--size)*0.066); height: calc(var(--size)*0.066); font-size: calc(var(--size)*0.036); }
+  .lvl0 .disc { width: calc(var(--size)*0.063); height: calc(var(--size)*0.063); }
+  .lvl1 .disc { width: calc(var(--size)*0.06);  height: calc(var(--size)*0.06);  }
+  .lvl2 .disc { width: calc(var(--size)*0.058); height: calc(var(--size)*0.058); }
+  .lvl3 .disc { width: calc(var(--size)*0.056); height: calc(var(--size)*0.056); }
+  .lvl4 .disc { width: calc(var(--size)*0.058); height: calc(var(--size)*0.058); }
 
   .badge.placeholder .disc { background: rgba(255,255,255,.03); border-style: dashed; cursor: default; }
   .badge.placeholder .disc:hover { transform: none; border-color: var(--line); }
@@ -125,6 +133,23 @@
     box-shadow: 0 0 0 2px var(--win-glow), 0 2px 12px rgba(0,0,0,.5);
   }
   .badge.win .code { color: #bdf6d4; }
+
+  .fly {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    pointer-events: none;
+    width: calc(var(--size) * 0.06);
+    height: calc(var(--size) * 0.06);
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 2px rgba(245,197,66,.3), 0 3px 10px rgba(0,0,0,.6);
+    transition: left .55s cubic-bezier(.45,.02,.2,1),
+                top .55s cubic-bezier(.45,.02,.2,1),
+                opacity .55s ease-in;
+  }
 
   .center {
     position: absolute; left: 50%; top: 50%;
@@ -138,7 +163,16 @@
     display: block;
     filter: drop-shadow(0 0 14px rgba(245,197,66,.55)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
   }
-  .center .champ-flag { font-size: calc(var(--size) * 0.05); margin-top: calc(var(--size)*0.004); }
+  .center .champ-flag {
+    width: calc(var(--size) * 0.052);
+    height: calc(var(--size) * 0.052);
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 10px rgba(245,197,66,.5);
+    margin-top: calc(var(--size) * 0.008);
+  }
   .center .champ-name {
     font-weight: 800;
     font-size: calc(var(--size) * 0.024);
@@ -261,6 +295,33 @@
     render();
   }
 
+  // Send a flag gliding along the connecting line into the next ring.
+  function flyFlag(from, to, team) {
+    const stage = document.getElementById("stage");
+    const f = document.createElement("div");
+    f.className = "fly";
+    f.style.backgroundImage = "url('" + flagUrl(team) + "')";
+    f.style.left = from.x + "%";
+    f.style.top = from.y + "%";
+    stage.appendChild(f);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      f.style.left = to.x + "%";
+      f.style.top = to.y + "%";
+      f.style.opacity = "0";
+    }));
+    f.addEventListener("transitionend", () => f.remove(), { once: true });
+    setTimeout(() => f.remove(), 1000);
+  }
+
+  function advance(level, slot, team) {
+    const idx = Math.floor(slot / 2);
+    const undo = picks[level][idx] === team;
+    const from = nodePos(level, slot);
+    const to = nodePos(level + 1, idx);
+    choose(level, idx, team);           // update state + re-render
+    if (!undo) flyFlag(from, to, team); // glide overlay onto the new ring
+  }
+
   // Set of teams that have lost a decided match (greyed out).
   function eliminatedTeams() {
     const elim = new Set();
@@ -275,26 +336,48 @@
     return elim;
   }
 
-  function nodePos(level, slot) {
-    const ang = (-90 + (slot + 0.5) * (360 / COUNTS[level])) * Math.PI / 180;
-    const r = RADII[level] * SPREAD;
-    return { x: 50 + r * Math.cos(ang), y: 50 + r * Math.sin(ang) };
+  function angleDeg(level, slot) { return -90 + (slot + 0.5) * (360 / COUNTS[level]); }
+  function polar(rPct, deg) {
+    const a = deg * Math.PI / 180;
+    return { x: 50 + rPct * Math.cos(a), y: 50 + rPct * Math.sin(a) };
   }
+  function nodePos(level, slot) { return polar(RADII[level] * SPREAD, angleDeg(level, slot)); }
+
+  const ISO = {
+    "South Africa":"za","Canada":"ca","Netherlands":"nl","Morocco":"ma",
+    "Germany":"de","Paraguay":"py","France":"fr","Sweden":"se",
+    "Belgium":"be","Senegal":"sn","USA":"us","Bosnia and Herzegovina":"ba",
+    "Spain":"es","Austria":"at","Portugal":"pt","Croatia":"hr",
+    "Brazil":"br","Japan":"jp","Côte d'Ivoire":"ci","Norway":"no",
+    "Mexico":"mx","Ecuador":"ec","England":"gb-eng","DR Congo":"cd",
+    "Switzerland":"ch","Algeria":"dz","Colombia":"co","Ghana":"gh",
+    "Australia":"au","Egypt":"eg","Argentina":"ar","Cabo Verde":"cv"
+  };
+  function flagUrl(team) { return "https://flagcdn.com/w160/" + ISO[team] + ".png"; }
 
   function render() {
     const stage = document.getElementById("stage");
     stage.innerHTML = "";
 
-    // 1) connecting lines (behind everything)
+    // 1) bracket connectors: a radial spoke from each team to its match's
+    //    radius, then an arc crossbar to the parent slot (right-angled bracket).
     let svg = '<svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">';
     for (let L = 1; L <= ROUND_COUNT; L++) {
+      const rPar = RADII[L] * SPREAD;
       for (let s = 0; s < COUNTS[L]; s++) {
-        const parent = nodePos(L, s);
+        const tp = angleDeg(L, s);
+        const par = polar(rPar, tp);
         const winner = picks[L - 1][s];
         for (const cs of [2 * s, 2 * s + 1]) {
-          const child = nodePos(L - 1, cs);
-          const on = winner && teamAt(L - 1, cs) === winner ? " class=\"on\"" : "";
-          svg += `<line${on} x1="${child.x.toFixed(2)}" y1="${child.y.toFixed(2)}" x2="${parent.x.toFixed(2)}" y2="${parent.y.toFixed(2)}" />`;
+          const tc = angleDeg(L - 1, cs);
+          const childPt = nodePos(L - 1, cs);
+          const inner = polar(rPar, tc);
+          const sweep = tc < tp ? 1 : 0;
+          const d = `M ${childPt.x.toFixed(2)} ${childPt.y.toFixed(2)} ` +
+                    `L ${inner.x.toFixed(2)} ${inner.y.toFixed(2)} ` +
+                    `A ${rPar.toFixed(2)} ${rPar.toFixed(2)} 0 0 ${sweep} ${par.x.toFixed(2)} ${par.y.toFixed(2)}`;
+          const on = winner && teamAt(L - 1, cs) === winner ? ' class="on"' : '';
+          svg += `<path${on} d="${d}" />`;
         }
       }
     }
@@ -316,11 +399,12 @@
         disc.className = "disc";
 
         if (team) {
-          disc.textContent = FLAGS[team] || "⚽";
+          disc.classList.add("flag");
+          disc.style.backgroundImage = "url('" + flagUrl(team) + "')";
           badge.title = team;
           if (elim.has(team)) badge.classList.add("elim");
           if (picks[L][Math.floor(s / 2)] === team) badge.classList.add("win");
-          disc.addEventListener("click", () => choose(L, Math.floor(s / 2), team));
+          disc.addEventListener("click", () => advance(L, s, team));
           badge.appendChild(disc);
         } else {
           badge.classList.add("placeholder");
@@ -336,7 +420,7 @@
       const team = teamAt(0, s);
       if (!team) continue;
       const ang = (-90 + (s + 0.5) * (360 / COUNTS[0])) * Math.PI / 180;
-      const r = 46;
+      const r = 44;
       const lbl = document.createElement("div");
       lbl.className = "rim-code" + (elim.has(team) ? " elim" : "");
       lbl.textContent = SHORT[team] || team;
@@ -351,7 +435,7 @@
     center.className = "center";
     center.innerHTML = '<img class="trophy" src="trophy.png" alt="World Cup trophy" />' +
       (champ
-        ? '<div class="champ-flag">' + (FLAGS[champ] || "⚽") + '</div>' +
+        ? '<div class="champ-flag" style="background-image:url(\'' + flagUrl(champ) + '\')"></div>' +
           '<div class="champ-name">' + champ + '</div>'
         : '<div class="champ-label">Champion</div>');
     stage.appendChild(center);
