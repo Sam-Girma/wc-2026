@@ -134,6 +134,9 @@
   }
   .badge.win .code { color: #bdf6d4; }
 
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+  .confetti i { position: absolute; display: block; border-radius: 1px; box-shadow: 0 0 4px rgba(245,197,66,.5); }
+
   .fly {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -320,6 +323,44 @@
     const to = nodePos(level + 1, idx);
     choose(level, idx, team);           // update state + re-render
     if (!undo) flyFlag(from, to, team); // glide overlay onto the new ring
+    if (!undo && level === ROUND_COUNT - 1) celebrate(); // champion crowned!
+  }
+
+  // Golden confetti burst from the centre when a champion is crowned.
+  function celebrate() {
+    const layer = document.createElement("div");
+    layer.className = "confetti";
+    document.body.appendChild(layer);
+    const colors = ["#f5c542", "#ffe08a", "#d4af37", "#fff3c4", "#ffffff", "#e8b923"];
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+    const reach = Math.min(window.innerWidth, window.innerHeight);
+    for (let i = 0; i < 150; i++) {
+      const p = document.createElement("i");
+      const w = 6 + Math.random() * 9;
+      p.style.background = colors[i % colors.length];
+      p.style.width = w + "px";
+      p.style.height = (w * (0.4 + Math.random() * 0.5)) + "px";
+      p.style.left = cx + "px";
+      p.style.top = cy + "px";
+      layer.appendChild(p);
+      const a = Math.random() * Math.PI * 2;
+      const dist = 70 + Math.random() * reach * 0.55;
+      const dx = Math.cos(a) * dist;
+      const up = Math.sin(a) * dist - (120 + Math.random() * 180);
+      const fall = window.innerHeight * 0.55 + Math.random() * window.innerHeight * 0.45;
+      const rot = Math.random() * 900 - 450;
+      p.animate([
+        { transform: "translate(-50%,-50%) translate(0,0) rotate(0deg)", opacity: 1 },
+        { transform: `translate(-50%,-50%) translate(${dx}px,${up}px) rotate(${rot / 2}deg)`, opacity: 1, offset: 0.4 },
+        { transform: `translate(-50%,-50%) translate(${dx * 1.1}px,${up + fall}px) rotate(${rot}deg)`, opacity: 0 }
+      ], {
+        duration: 2800 + Math.random() * 1800,
+        delay: Math.random() * 350,
+        easing: "cubic-bezier(.15,.5,.25,1)",
+        fill: "forwards"
+      });
+    }
+    setTimeout(() => layer.remove(), 5200);
   }
 
   // Set of teams that have lost a decided match (greyed out).
